@@ -70,7 +70,8 @@ const btnClearLogs    = document.getElementById('btnClearLogs');
 const publishLogText  = document.getElementById('publishLogText');
 const lastUpdate      = document.getElementById('lastUpdate');
 
-let historyChart = null;
+let tempChart = null;
+let humChart = null;
 let currentTemp = null;
 let currentHum = null;
 let tempWarningLogged = false;
@@ -220,10 +221,12 @@ function addLog(msg, type = 'info') {
 }
 
 function initChart() {
-  const ctx = document.getElementById('historyChart');
-  if (!ctx) return;
+  const tempCtx = document.getElementById('tempChart');
+  const humCtx = document.getElementById('humChart');
+  if (!tempCtx || !humCtx) return;
   
-  historyChart = new Chart(ctx.getContext('2d'), {
+  // Chart 1: Temperature Chart
+  tempChart = new Chart(tempCtx.getContext('2d'), {
     type: 'line',
     data: {
       labels: [],
@@ -237,9 +240,45 @@ function initChart() {
           pointHoverRadius: 5,
           data: [],
           tension: 0.3,
-          fill: true,
-          yAxisID: 'yTemp'
-        },
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          type: 'linear',
+          beginAtZero: false,
+          title: {
+            display: true,
+            text: 'Nhiệt độ (°C)',
+            color: '#ef4444',
+            font: { weight: 'bold' }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            font: {
+              family: "'Inter', sans-serif",
+              weight: '600'
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // Chart 2: Humidity Chart
+  humChart = new Chart(humCtx.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
         {
           label: 'Độ ẩm (%)',
           borderColor: '#0ea5e9',
@@ -249,8 +288,7 @@ function initChart() {
           pointHoverRadius: 5,
           data: [],
           tension: 0.3,
-          fill: true,
-          yAxisID: 'yHum'
+          fill: true
         }
       ]
     },
@@ -258,31 +296,14 @@ function initChart() {
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        yTemp: {
+        y: {
           type: 'linear',
-          position: 'left',
-          title: {
-            display: true,
-            text: 'Nhiệt độ (°C)',
-            color: '#ef4444',
-            font: { weight: 'bold' }
-          },
-          min: 15,
-          max: 45
-        },
-        yHum: {
-          type: 'linear',
-          position: 'right',
+          beginAtZero: false,
           title: {
             display: true,
             text: 'Độ ẩm (%)',
             color: '#0ea5e9',
             font: { weight: 'bold' }
-          },
-          min: 20,
-          max: 100,
-          grid: {
-            drawOnChartArea: false
           }
         }
       },
@@ -302,28 +323,43 @@ function initChart() {
 }
 
 function addChartPoint(timeLabel, temp, hum) {
-  if (!historyChart) return;
-  if (temp === null || hum === null) return;
+  if (!tempChart || !humChart) return;
   
-  const labels = historyChart.data.labels;
-  const tempData = historyChart.data.datasets[0].data;
-  const humData = historyChart.data.datasets[1].data;
-  
-  if (labels.length > 0 && labels[labels.length - 1] === timeLabel) {
-    tempData[tempData.length - 1] = temp;
-    humData[humData.length - 1] = hum;
-  } else {
-    labels.push(timeLabel);
-    tempData.push(temp);
-    humData.push(hum);
+  // 1. Temperature Chart update
+  if (temp !== null) {
+    const tempLabels = tempChart.data.labels;
+    const tempDataset = tempChart.data.datasets[0].data;
     
-    if (labels.length > 15) {
-      labels.shift();
-      tempData.shift();
-      humData.shift();
+    if (tempLabels.length > 0 && tempLabels[tempLabels.length - 1] === timeLabel) {
+      tempDataset[tempDataset.length - 1] = temp;
+    } else {
+      tempLabels.push(timeLabel);
+      tempDataset.push(temp);
+      if (tempLabels.length > 15) {
+        tempLabels.shift();
+        tempDataset.shift();
+      }
     }
+    tempChart.update('none');
   }
-  historyChart.update('none');
+  
+  // 2. Humidity Chart update
+  if (hum !== null) {
+    const humLabels = humChart.data.labels;
+    const humDataset = humChart.data.datasets[0].data;
+    
+    if (humLabels.length > 0 && humLabels[humLabels.length - 1] === timeLabel) {
+      humDataset[humDataset.length - 1] = hum;
+    } else {
+      humLabels.push(timeLabel);
+      humDataset.push(hum);
+      if (humLabels.length > 15) {
+        humLabels.shift();
+        humDataset.shift();
+      }
+    }
+    humChart.update('none');
+  }
 }
 
 // ─────────────────────────────────────────

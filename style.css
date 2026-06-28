@@ -366,6 +366,18 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 
 /* ======= Chart Card ======= */
+.charts-container-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media (max-width: 768px) {
+  .charts-container-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
 .chart-card {
   background: var(--green-50);
   border: 1.5px solid var(--green-200);
@@ -375,6 +387,7 @@ input:checked + .slider:before { transform: translateX(20px); }
   position: relative;
   overflow: hidden;
   transition: transform var(--transition), box-shadow var(--transition);
+  height: 300px;
 }
 .chart-card:hover {
   transform: translateY(-2px);
