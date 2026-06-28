@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IoT Dashboard – ESP8266</title>
+  <meta name="description" content="Dashboard giám sát nhiệt độ, độ ẩm và điều khiển LED qua MQTT – ESP8266" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- MQTT.js & Chart.js CDNs -->
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===== HEADER ===== -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🌿</span>
+        <span class="logo-text">IoT <span class="logo-accent">Dashboard</span></span>
+      </div>
+
+      <!-- MQTT Status Badge -->
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-label" id="statusLabel">Đang kết nối…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main">
+
+    <!-- Sensor Cards -->
+    <section class="section">
+      <h2 class="section-title">Cảm biến môi trường & Ánh sáng</h2>
+      <div class="cards-grid">
+
+        <!-- Nhiệt độ -->
+        <article class="card card--temp" id="cardTemp">
+          <div class="card-icon-wrap">
+            <svg class="card-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <span class="card-label">Nhiệt độ</span>
+            <div class="card-value-row">
+              <span class="card-value" id="tempValue">--</span>
+              <span class="card-unit">°C</span>
+            </div>
+            <span class="card-topic">esp8266/temp</span>
+          </div>
+          <div class="card-glow"></div>
+        </article>
+
+        <!-- Độ ẩm -->
+        <article class="card card--hum" id="cardHum">
+          <div class="card-icon-wrap">
+            <svg class="card-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <span class="card-label">Độ ẩm</span>
+            <div class="card-value-row">
+              <span class="card-value" id="humValue">--</span>
+              <span class="card-unit">%</span>
+            </div>
+            <span class="card-topic">esp8266/hum</span>
+          </div>
+          <div class="card-glow"></div>
+        </article>
+
+        <!-- Ánh sáng LDR -->
+        <article class="card card--ldr" id="cardLdr">
+          <div class="card-icon-wrap">
+            <svg class="card-icon" id="ldrIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="card-body">
+            <span class="card-label">Cảm biến ánh sáng</span>
+            <div class="card-value-row">
+              <span class="card-value" id="ldrValue" style="font-size: 2.0rem; margin-top: 12px; margin-bottom: 8px;">Đang tải...</span>
+            </div>
+            <span class="card-topic">esp8266/ldr</span>
+          </div>
+          <div class="card-glow"></div>
+        </article>
+
+      </div>
+    </section>
+
+    <!-- Biểu đồ lịch sử -->
+    <section class="section">
+      <h2 class="section-title">Biểu đồ lịch sử nhiệt độ & độ ẩm</h2>
+      <div class="chart-card">
+        <canvas id="historyChart"></canvas>
+      </div>
+    </section>
+
+    <!-- LED Control -->
+    <section class="section">
+      <h2 class="section-title">Điều khiển thiết bị</h2>
+      <div class="control-grid">
+
+        <!-- LED 1 Card (Ánh sáng) -->
+        <div class="control-card">
+          <div class="control-header">
+            <div class="led-status-wrap">
+              <div class="led-bulb" id="ledBulb" aria-label="Trạng thái Đèn 1">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 21h6M12 3a6 6 0 0 1 4 10.47V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-3.53A6 6 0 0 1 12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="led-info">
+                <span class="led-title">Đèn Chiếu Sáng (LED 1)</span>
+                <span class="led-state" id="ledState">Chưa xác định</span>
+              </div>
+            </div>
+
+            <!-- Auto Mode Toggle -->
+            <div class="auto-mode-wrap">
+              <span class="auto-mode-label">Tự động (LDR)</span>
+              <label class="switch">
+                <input type="checkbox" id="autoModeToggle" checked>
+                <span class="slider round"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn--on" id="btnOn" aria-label="Bật đèn 1">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              Bật đèn 1
+            </button>
+
+            <button class="btn btn--off" id="btnOff" aria-label="Tắt đèn 1">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              Tắt đèn 1
+            </button>
+          </div>
+        </div>
+
+        <!-- LED 2 Card (Điều hòa / Nhiệt độ) -->
+        <div class="control-card control-card--ac">
+          <div class="control-header">
+            <div class="led-status-wrap">
+              <div class="led-bulb led-bulb--ac" id="led2Bulb" aria-label="Trạng thái LED 2">
+                <!-- Snowflake / AC icon -->
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2v20M17 5L7 19M19 17L5 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M3 12h18M9 4l3 3 3-3M15 20l-3-3-3 3M20 9l-3 3 3 3M4 15l3-3-3-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="led-info">
+                <span class="led-title">Đèn Điều Hòa (LED 2)</span>
+                <span class="led-state led-state--ac" id="led2State">Chưa xác định</span>
+              </div>
+            </div>
+
+            <!-- Auto Mode 2 Toggle -->
+            <div class="auto-mode-wrap auto-mode-wrap--ac">
+              <span class="auto-mode-label auto-mode-label--ac">Tự động (>=33°C)</span>
+              <label class="switch">
+                <input type="checkbox" id="autoMode2Toggle" checked>
+                <span class="slider round"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn--on-ac" id="btn2On" aria-label="Bật đèn 2">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              Bật điều hòa
+            </button>
+
+            <button class="btn btn--off-ac" id="btn2Off" aria-label="Tắt đèn 2">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              Tắt điều hòa
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Publish Log -->
+      <div class="publish-log" id="publishLog" style="margin-top: 20px;">
+        <span class="publish-log-icon">📡</span>
+        <span id="publishLogText">Chưa có lệnh nào được gửi</span>
+      </div>
+    </section>
+
+    <!-- Nhật ký & Cảnh báo hệ thống -->
+    <section class="section">
+      <h2 class="section-title">Nhật ký & Cảnh báo hệ thống</h2>
+      <div class="log-card">
+        <div class="log-header">
+          <span class="log-title">Thông báo trạng thái & Cảnh báo</span>
+          <button class="log-clear-btn" id="btnClearLogs">Xóa nhật ký</button>
+        </div>
+        <div class="log-body" id="systemLogs">
+          <div class="log-item log-item--info">
+            <span class="log-time">[--:--:--]</span>
+            <span class="log-msg">Hệ thống sẵn sàng. Đang kết nối MQTT...</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Connection Info -->
+    <section class="section">
+      <h2 class="section-title">Thông tin kết nối</h2>
+      <div class="info-card">
+        <div class="info-row">
+          <span class="info-key">Broker</span>
+          <span class="info-val">broker.hivemq.com</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Protocol</span>
+          <span class="info-val">WSS / 8884</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Subscribe (Web)</span>
+          <span class="info-val">esp8266/temp · esp8266/hum · esp8266/ldr · esp8266/led/state · esp8266/automode/state · esp8266/led2/state · esp8266/automode2/state</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Publish (Web)</span>
+          <span class="info-val">esp8266/led · esp8266/automode · esp8266/led2 · esp8266/automode2</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">Cập nhật lúc</span>
+          <span class="info-val" id="lastUpdate">--</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ===== FOOTER ===== -->
+  <footer class="footer">
+    <p>ESP8266 · MQTT · IoT Dashboard &nbsp;|&nbsp; PTIT</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
