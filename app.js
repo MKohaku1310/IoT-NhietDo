@@ -44,17 +44,22 @@ const cardLdr         = document.getElementById('cardLdr');
 const ldrValue        = document.getElementById('ldrValue');
 const ldrIcon         = document.getElementById('ldrIcon');
 
+// Ambient Background (Thời tiết)
+const ambientBg       = document.getElementById('ambient-bg');
+
 // Điều khiển LED 1 (Ánh sáng)
 const ledBulb         = document.getElementById('ledBulb');
 const ledState        = document.getElementById('ledState');
-const autoModeToggle  = document.getElementById('autoModeToggle');
+const btnModeAuto1    = document.getElementById('btnModeAuto1');
+const btnModeManual1  = document.getElementById('btnModeManual1');
 const btnOn           = document.getElementById('btnOn');
 const btnOff          = document.getElementById('btnOff');
 
 // Điều khiển LED 2 (Điều hòa / Nhiệt độ)
 const led2Bulb        = document.getElementById('led2Bulb');
 const led2State       = document.getElementById('led2State');
-const autoMode2Toggle = document.getElementById('autoMode2Toggle');
+const btnModeAuto2    = document.getElementById('btnModeAuto2');
+const btnModeManual2  = document.getElementById('btnModeManual2');
 const btn2On          = document.getElementById('btn2On');
 const btn2Off         = document.getElementById('btn2Off');
 
@@ -77,18 +82,67 @@ let lastLed2StateText = "";
 // ─────────────────────────────────────────
 // 3. CẬP NHẬT UI TRẠNG THÁI KẾT NỐI
 // ─────────────────────────────────────────
+// ─────────────────────────────────────────
+// 3. CẬP NHẬT UI TRẠNG THÁI KẾT NỐI & CHẾ ĐỘ
+// ─────────────────────────────────────────
+function updateModeUI(deviceNum, mode) {
+  if (deviceNum === 1) {
+    if (mode === 'auto') {
+      btnModeAuto1.classList.add('active');
+      btnModeManual1.classList.remove('active');
+      btnOn.disabled = true;
+      btnOff.disabled = true;
+      btnOn.classList.add('btn-locked');
+      btnOff.classList.add('btn-locked');
+    } else {
+      btnModeAuto1.classList.remove('active');
+      btnModeManual1.classList.add('active');
+      if (statusBadge.classList.contains('connected')) {
+        btnOn.disabled = false;
+        btnOff.disabled = false;
+      }
+      btnOn.classList.remove('btn-locked');
+      btnOff.classList.remove('btn-locked');
+    }
+  } else if (deviceNum === 2) {
+    if (mode === 'auto') {
+      btnModeAuto2.classList.add('active');
+      btnModeManual2.classList.remove('active');
+      btn2On.disabled = true;
+      btn2Off.disabled = true;
+      btn2On.classList.add('btn-locked');
+      btn2Off.classList.add('btn-locked');
+    } else {
+      btnModeAuto2.classList.remove('active');
+      btnModeManual2.classList.add('active');
+      if (statusBadge.classList.contains('connected')) {
+        btn2On.disabled = false;
+        btn2Off.disabled = false;
+      }
+      btn2On.classList.remove('btn-locked');
+      btn2Off.classList.remove('btn-locked');
+    }
+  }
+}
+
 function setConnected() {
   statusBadge.classList.add('connected');
   statusBadge.classList.remove('disconnected');
   statusLabel.textContent = 'Đã kết nối';
   
-  btnOn.disabled  = false;
-  btnOff.disabled = false;
-  autoModeToggle.disabled = false;
+  btnModeAuto1.disabled = false;
+  btnModeManual1.disabled = false;
+  btnModeAuto2.disabled = false;
+  btnModeManual2.disabled = false;
+
+  // Khôi phục trạng thái nút bấm thủ công theo chế độ hiện tại
+  const isAuto1 = btnModeAuto1.classList.contains('active');
+  btnOn.disabled  = isAuto1;
+  btnOff.disabled = isAuto1;
   
-  btn2On.disabled  = false;
-  btn2Off.disabled = false;
-  autoMode2Toggle.disabled = false;
+  const isAuto2 = btnModeAuto2.classList.contains('active');
+  btn2On.disabled  = isAuto2;
+  btn2Off.disabled = isAuto2;
 
   addLog('Đã kết nối thành công tới broker MQTT!', 'success');
 }
@@ -100,11 +154,13 @@ function setDisconnected() {
   
   btnOn.disabled  = true;
   btnOff.disabled = true;
-  autoModeToggle.disabled = true;
+  btnModeAuto1.disabled = true;
+  btnModeManual1.disabled = true;
   
   btn2On.disabled  = true;
   btn2Off.disabled = true;
-  autoMode2Toggle.disabled = true;
+  btnModeAuto2.disabled = true;
+  btnModeManual2.disabled = true;
 
   addLog('Đang ngắt kết nối / Mất tín hiệu mạng!', 'danger');
 }
@@ -115,11 +171,13 @@ function setConnecting() {
   
   btnOn.disabled  = true;
   btnOff.disabled = true;
-  autoModeToggle.disabled = true;
+  btnModeAuto1.disabled = true;
+  btnModeManual1.disabled = true;
   
   btn2On.disabled  = true;
   btn2Off.disabled = true;
-  autoMode2Toggle.disabled = true;
+  btnModeAuto2.disabled = true;
+  btnModeManual2.disabled = true;
 
   addLog('Đang thiết lập kết nối tới broker MQTT...', 'info');
 }
@@ -310,6 +368,47 @@ function updateLedUI(state) {
   }
 }
 
+let snowInterval = null;
+
+function startSnowing() {
+  if (snowInterval) return;
+  if (!ambientBg) return;
+  ambientBg.classList.add('snowing');
+  snowInterval = setInterval(() => {
+    const snowflake = document.createElement('div');
+    snowflake.className = 'snowflake';
+    const flakes = ['❄', '❅', '❆', '•'];
+    snowflake.textContent = flakes[Math.floor(Math.random() * flakes.length)];
+    
+    const startX = Math.random() * 100;
+    const size = Math.random() * 0.8 + 0.6; // 0.6rem đến 1.4rem
+    const duration = Math.random() * 5 + 5; // 5s đến 10s
+    const opacity = Math.random() * 0.7 + 0.3;
+    
+    snowflake.style.left = `${startX}vw`;
+    snowflake.style.fontSize = `${size}rem`;
+    snowflake.style.animationDuration = `${duration}s`;
+    snowflake.style.opacity = opacity;
+    
+    ambientBg.appendChild(snowflake);
+    
+    setTimeout(() => {
+      snowflake.remove();
+    }, duration * 1000);
+  }, 250);
+}
+
+function stopSnowing() {
+  if (!snowInterval) return;
+  clearInterval(snowInterval);
+  snowInterval = null;
+  if (ambientBg) {
+    ambientBg.classList.remove('snowing');
+    const snowflakes = ambientBg.querySelectorAll('.snowflake');
+    snowflakes.forEach(s => s.remove());
+  }
+}
+
 function updateLed2UI(state) {
   if (state === 'ON') {
     led2Bulb.classList.add('on');
@@ -317,12 +416,14 @@ function updateLed2UI(state) {
     led2State.classList.add('on');
     led2State.classList.remove('off');
     led2State.textContent = '❄️ ĐANG BẬT';
+    startSnowing();
   } else {
     led2Bulb.classList.add('off');
     led2Bulb.classList.remove('on');
     led2State.classList.add('off');
     led2State.classList.remove('on');
     led2State.textContent = '🌑 ĐANG TẮT';
+    stopSnowing();
   }
 }
 
@@ -460,6 +561,15 @@ client.on('message', (topic, message) => {
         updateTimestamp();
         addChartPoint(new Date().toLocaleTimeString('vi-VN'), currentTemp, currentHum);
         
+        // Hiệu ứng nền nhiệt độ cao
+        if (ambientBg) {
+          if (temp >= 33.0) {
+            ambientBg.classList.add('high-temp');
+          } else {
+            ambientBg.classList.remove('high-temp');
+          }
+        }
+        
         // Log cảnh báo nhiệt độ cao (>33 độ C)
         if (temp > 33.0) {
           if (!tempWarningLogged) {
@@ -499,12 +609,8 @@ client.on('message', (topic, message) => {
       break;
 
     case TOPIC_AUTO_STATE:
-      // Đồng bộ checkbox tự động trên web với ESP8266
-      const autoChecked = (payload === 'ON');
-      if (autoModeToggle.checked !== autoChecked) {
-        autoModeToggle.checked = autoChecked;
-        addLog(`⚙️ Chế độ tự động Đèn 1 đã chuyển thành: ${payload}`, 'info');
-      }
+      // Đồng bộ nút chế độ tự động trên web với ESP8266
+      updateModeUI(1, payload === 'ON' ? 'auto' : 'manual');
       break;
 
     case TOPIC_LED2_STATE:
@@ -516,12 +622,8 @@ client.on('message', (topic, message) => {
       break;
 
     case TOPIC_AUTO2_STATE:
-      // Đồng bộ checkbox tự động 2 trên web với ESP8266
-      const auto2Checked = (payload === 'ON');
-      if (autoMode2Toggle.checked !== auto2Checked) {
-        autoMode2Toggle.checked = auto2Checked;
-        addLog(`⚙️ Chế độ tự động Điều hòa đã chuyển thành: ${payload}`, 'info');
-      }
+      // Đồng bộ nút chế độ tự động 2 trên web với ESP8266
+      updateModeUI(2, payload === 'ON' ? 'auto' : 'manual');
       break;
   }
 });
@@ -554,18 +656,28 @@ client.on('close', () => {
 btnOn.addEventListener('click',  () => sendLed('ON'));
 btnOff.addEventListener('click', () => sendLed('OFF'));
 
-// Checkbox Tự động bật đèn 1 khi trời tối
-autoModeToggle.addEventListener('change', (e) => {
-  sendAutoMode(e.target.checked);
+// Sự kiện đổi chế độ LED 1
+btnModeAuto1.addEventListener('click', () => {
+  sendAutoMode(true);
+  updateModeUI(1, 'auto');
+});
+btnModeManual1.addEventListener('click', () => {
+  sendAutoMode(false);
+  updateModeUI(1, 'manual');
 });
 
 // Nút bấm Bật/Tắt LED 2
 btn2On.addEventListener('click',  () => sendLed2('ON'));
 btn2Off.addEventListener('click', () => sendLed2('OFF'));
 
-// Checkbox Tự động bật đèn 2 khi nhiệt độ cao
-autoMode2Toggle.addEventListener('change', (e) => {
-  sendAutoMode2(e.target.checked);
+// Sự kiện đổi chế độ LED 2
+btnModeAuto2.addEventListener('click', () => {
+  sendAutoMode2(true);
+  updateModeUI(2, 'auto');
+});
+btnModeManual2.addEventListener('click', () => {
+  sendAutoMode2(false);
+  updateModeUI(2, 'manual');
 });
 
 // Nút xóa nhật ký

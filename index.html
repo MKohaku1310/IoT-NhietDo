@@ -15,9 +15,11 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2" />
 </head>
 <body>
+  <!-- Ambient background container for weather effects -->
+  <div id="ambient-bg"></div>
 
   <!-- ===== HEADER ===== -->
   <header class="header">
@@ -90,7 +92,7 @@
           <div class="card-body">
             <span class="card-label">Cảm biến ánh sáng</span>
             <div class="card-value-row">
-              <span class="card-value" id="ldrValue" style="font-size: 2.0rem; margin-top: 12px; margin-bottom: 8px;">Đang tải...</span>
+              <span class="card-value" id="ldrValue">Đang tải...</span>
             </div>
             <span class="card-topic">esp8266/ldr</span>
           </div>
@@ -128,13 +130,10 @@
               </div>
             </div>
 
-            <!-- Auto Mode Toggle -->
-            <div class="auto-mode-wrap">
-              <span class="auto-mode-label">Tự động (LDR)</span>
-              <label class="switch">
-                <input type="checkbox" id="autoModeToggle" checked>
-                <span class="slider round"></span>
-              </label>
+            <!-- Mode Selector: Auto vs Manual -->
+            <div class="mode-selector" id="modeSelector1">
+              <button class="mode-btn active" id="btnModeAuto1">Tự động (LDR)</button>
+              <button class="mode-btn" id="btnModeManual1">Thủ công</button>
             </div>
           </div>
 
@@ -174,13 +173,10 @@
               </div>
             </div>
 
-            <!-- Auto Mode 2 Toggle -->
-            <div class="auto-mode-wrap auto-mode-wrap--ac">
-              <span class="auto-mode-label auto-mode-label--ac">Tự động (>=33°C)</span>
-              <label class="switch">
-                <input type="checkbox" id="autoMode2Toggle" checked>
-                <span class="slider round"></span>
-              </label>
+            <!-- Mode Selector: Auto vs Manual -->
+            <div class="mode-selector mode-selector--ac" id="modeSelector2">
+              <button class="mode-btn active" id="btnModeAuto2">Tự động (>=33°C)</button>
+              <button class="mode-btn" id="btnModeManual2">Thủ công</button>
             </div>
           </div>
 
@@ -263,6 +259,6 @@
     <p>ESP8266 · MQTT · IoT Dashboard &nbsp;|&nbsp; PTIT</p>
   </footer>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

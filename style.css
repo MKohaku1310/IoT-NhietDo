@@ -102,8 +102,12 @@ body {
 .cards-grid {
   display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px;
 }
-@media (max-width: 768px) { .cards-grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 520px) { .cards-grid { grid-template-columns: 1fr; } }
+@media (max-width: 768px) {
+  .cards-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+}
 
 .card {
   --value-color: var(--gray-800);
@@ -150,6 +154,11 @@ body {
   font-size: 3.2rem; font-weight: 800;
   color: var(--value-color); letter-spacing: -.04em;
   transition: color var(--transition);
+}
+#ldrValue {
+  font-size: 2.0rem;
+  margin-top: 12px;
+  margin-bottom: 8px;
 }
 .card-unit { font-size: 1.4rem; font-weight: 500; color: var(--green-500); }
 .card-topic { font-size: .72rem; color: var(--gray-400); margin-top: 6px; font-family: monospace; }
@@ -283,7 +292,8 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 @media (max-width: 768px) {
   .control-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
   }
 }
 
@@ -492,3 +502,255 @@ input:checked + .slider:before { transform: translateX(20px); }
 .log-item--success .log-msg {
   color: #15803d;
 }
+
+/* =========================================
+   Segmented Control for Mode Selector
+   ========================================= */
+.mode-selector {
+  display: flex;
+  background: var(--green-100);
+  border: 1.5px solid var(--green-200);
+  padding: 4px;
+  border-radius: 12px;
+  gap: 4px;
+  width: auto;
+  min-width: 240px;
+}
+
+.mode-selector--ac {
+  background: #e0f2fe;
+  border-color: #bae6fd;
+}
+
+.mode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--green-700);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.mode-selector--ac .mode-btn {
+  color: #0369a1;
+}
+
+.mode-btn:hover:not(.active):not(:disabled) {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.mode-btn.active {
+  background: #fff;
+  color: var(--green-600);
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.12);
+}
+
+.mode-selector--ac .mode-btn.active {
+  background: #fff;
+  color: #0284c7;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.12);
+}
+
+.mode-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Locked state style for manual buttons when Auto mode is ON */
+.btn-locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  pointer-events: none;
+  filter: grayscale(0.8);
+}
+
+/* =========================================
+   Ambient Weather Background & Animations
+   ========================================= */
+#ambient-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: -1;
+  transition: background 1.5s ease-in-out;
+  overflow: hidden;
+}
+
+/* High Temp Warning (Warm radial glow + animated sun) */
+#ambient-bg.high-temp {
+  background: radial-gradient(circle at 85% 15%, rgba(254, 215, 170, 0.35) 0%, rgba(254, 243, 199, 0.1) 50%, transparent 80%);
+}
+
+#ambient-bg.high-temp::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.5) 0%, rgba(253, 186, 116, 0.25) 50%, transparent 70%);
+  border-radius: 50%;
+  animation: sun-pulse 6s ease-in-out infinite alternate;
+}
+
+#ambient-bg.high-temp::after {
+  content: '';
+  position: absolute;
+  top: -90px;
+  right: -90px;
+  width: 300px;
+  height: 300px;
+  border: 2px dashed rgba(249, 115, 22, 0.15);
+  border-radius: 50%;
+  animation: sun-rotate 35s linear infinite;
+}
+
+@keyframes sun-pulse {
+  0% { transform: scale(0.9); opacity: 0.6; }
+  100% { transform: scale(1.1); opacity: 0.95; }
+}
+
+@keyframes sun-rotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* AC / Snowing Effect */
+#ambient-bg.snowing {
+  background: radial-gradient(circle at 15% 85%, rgba(186, 230, 253, 0.25) 0%, rgba(224, 242, 254, 0.08) 60%, transparent 90%);
+}
+
+.snowflake {
+  position: absolute;
+  top: -20px;
+  color: #0ea5e9;
+  text-shadow: 0 0 4px rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  z-index: 1;
+  user-select: none;
+  animation: fall linear forwards;
+}
+
+@keyframes fall {
+  0% {
+    transform: translateY(0) rotate(0deg) translateX(0);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translateY(50vh) rotate(180deg) translateX(20px);
+  }
+  100% {
+    transform: translateY(105vh) rotate(360deg) translateX(-20px);
+    opacity: 0;
+  }
+}
+
+/* Responsive UI Adjustments for Mobile */
+@media (max-width: 768px) {
+  /* Sensor Cards responsive updates */
+  .card {
+    padding: 12px 10px;
+    gap: 10px;
+    border-radius: 16px;
+  }
+  
+  .card-icon-wrap {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .card-icon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .card-label {
+    font-size: 0.72rem;
+  }
+  
+  .card-value {
+    font-size: 1.6rem;
+  }
+  
+  #ldrValue {
+    font-size: 1.1rem;
+    margin-top: 6px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+  }
+  
+  .card-unit {
+    font-size: 1rem;
+  }
+  
+  .card-topic {
+    font-size: 0.58rem;
+    margin-top: 4px;
+  }
+  
+  /* Control Cards responsive updates (Keep side-by-side) */
+  .control-card {
+    padding: 16px 12px;
+    gap: 16px;
+  }
+  
+  .control-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .led-status-wrap {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .led-bulb {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .led-bulb svg {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .led-state {
+    font-size: 1.1rem;
+  }
+  
+  .mode-selector {
+    min-width: 0;
+    width: 100%;
+  }
+  
+  .mode-btn {
+    padding: 8px 4px;
+    font-size: 0.75rem;
+  }
+  
+  .btn-group {
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+  }
+  
+  .btn {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 8px;
+    font-size: 0.85rem;
+  }
+}
+

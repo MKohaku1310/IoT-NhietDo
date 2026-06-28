@@ -27,6 +27,7 @@ bool lastAutoModeState = true; // Trạng thái Tự động LED 1 trước đó
 bool autoMode2 = true;      // Mặc định bật chế độ tự động theo nhiệt độ (LED 2)
 int lastLed2State = -1;     // Trạng thái LED 2 trước đó
 bool lastAutoMode2State = true; // Trạng thái Tự động LED 2 trước đó
+unsigned long lastSensorRead = 0; // Thời gian đọc cảm biến cuối cùng
 
 // ===== NHẬN LỆNH MQTT =====
 void callback(char* topic, byte* payload, unsigned int length) {
@@ -52,7 +53,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   // Điều khiển LED 1 thủ công
   else if (String(topic) == "esp8266/led") {
-    autoMode = false; // Tắt tự động để chuyển sang điều khiển bằng tay
     if (message == "ON") {
       digitalWrite(LED_PIN, HIGH);
       Serial.println("Dieu khien tay: BAT LED 1");
@@ -73,7 +73,6 @@ void callback(char* topic, byte* payload, unsigned int length) {
   }
   // Điều khiển LED 2 thủ công
   else if (String(topic) == "esp8266/led2") {
-    autoMode2 = false; // Tắt tự động để chuyển sang điều khiển bằng tay
     if (message == "ON") {
       digitalWrite(LED2_PIN, HIGH);
       Serial.println("Dieu khien tay: BAT LED 2 (Dieu hoa)");
@@ -189,108 +188,109 @@ void loop() {
   }
   client.loop();
 
-  // 1. Đọc cảm biến ánh sáng LDR (Digital DO)
-  int ldrState = digitalRead(LDR_PIN);
+  unsigned long currentMillis = millis();
+  if (currentMillis - lastSensorRead >= 2000) {
+    lastSensorRead = currentMillis;
 
-  // 2. Chế độ tự động Đèn 1: Bật đèn khi trời tối, tắt khi trời sáng
-  if (autoMode) {
-    if (ldrState == HIGH) {
-      digitalWrite(LED_PIN, HIGH); // Trời tối -> Bật đèn 1
-    } else {
-      digitalWrite(LED_PIN, LOW);  // Trời sáng -> Tắt đèn 1
-    }
-  }
+    // 1. Đọc cảm biến ánh sáng LDR (Digital DO)
+    int ldrState = digitalRead(LDR_PIN);
 
-  // 3. Đọc cảm biến nhiệt độ & độ ẩm
-  float temp = dht.readTemperature();
-  float hum = dht.readHumidity();
-
-  // Kiểm tra lỗi cảm biến DHT
-  if (isnan(temp) || isnan(hum)) {
-    Serial.println("Loi doc DHT!");
-    delay(2000);
-    return;
-  }
-
-  // 4. Chế độ tự động Đèn 2 (Điều hòa): Bật khi temp > 31, tắt khi temp < 30
-  if (autoMode2) {
-    if (temp > 33.0) {
-      digitalWrite(LED2_PIN, HIGH); // Nóng -> Bật điều hòa (Đèn 2)
-    } else if (temp < 30.0) {
-      digitalWrite(LED2_PIN, LOW);  // Mát -> Tắt điều hòa (Đèn 2)
-    }
-  }
-
-  // 5. GỬI DỮ LIỆU LÊN MQTT BROKER
-  // Gửi nhiệt độ và độ ẩm định kỳ
-  client.publish("esp8266/temp", String(temp).c_str());
-  client.publish("esp8266/hum", String(hum).c_str());
-
-  // Gửi trạng thái LDR nếu có thay đổi
-  if (ldrState != lastLdrState) {
-    if (ldrState == HIGH) {
-      client.publish("esp8266/ldr", "DARK");
-      Serial.println("Anh sang: TROI TOI");
-    } else {
-      client.publish("esp8266/ldr", "LIGHT");
-      Serial.println("Anh sang: TROI SANG");
-    }
-    lastLdrState = ldrState;
-  }
-
-  // Gửi trạng thái thực tế của LED 1 nếu có thay đổi
-  int currentLedState = digitalRead(LED_PIN);
-  if (currentLedState != lastLedState) {
-    if (currentLedState == HIGH) {
-      client.publish("esp8266/led/state", "ON");
-    } else {
-      client.publish("esp8266/led/state", "OFF");
-    }
-    lastLedState = currentLedState;
-  }
-
-  // Gửi trạng thái thực tế của LED 2 nếu có thay đổi
-  int currentLed2State = digitalRead(LED2_PIN);
-  if (currentLed2State != lastLed2State) {
-    if (currentLed2State == HIGH) {
-      client.publish("esp8266/led2/state", "ON");
-    } else {
-      client.publish("esp8266/led2/state", "OFF");
-    }
-    lastLed2State = currentLed2State;
-  }
-
-  // Gửi trạng thái chế độ Tự động LED 1 nếu có thay đổi
-  if (autoMode != lastAutoModeState) {
+    // 2. Chế độ tự động Đèn 1: Bật đèn khi trời tối, tắt khi trời sáng
     if (autoMode) {
-      client.publish("esp8266/automode/state", "ON");
-    } else {
-      client.publish("esp8266/automode/state", "OFF");
+      if (ldrState == HIGH) {
+        digitalWrite(LED_PIN, HIGH); // Trời tối -> Bật đèn 1
+      } else {
+        digitalWrite(LED_PIN, LOW);  // Trời sáng -> Tắt đèn 1
+      }
     }
-    lastAutoModeState = autoMode;
-  }
 
-  // Gửi trạng thái chế độ Tự động LED 2 nếu có thay đổi
-  if (autoMode2 != lastAutoMode2State) {
-    if (autoMode2) {
-      client.publish("esp8266/automode2/state", "ON");
+    // 3. Đọc cảm biến nhiệt độ & độ ẩm
+    float temp = dht.readTemperature();
+    float hum = dht.readHumidity();
+
+    // Kiểm tra lỗi cảm biến DHT
+    if (isnan(temp) || isnan(hum)) {
+      Serial.println("Loi doc DHT!");
     } else {
-      client.publish("esp8266/automode2/state", "OFF");
+      // 4. Chế độ tự động Đèn 2 (Điều hòa): Bật khi temp > 33, tắt khi temp < 30
+      if (autoMode2) {
+        if (temp > 33.0) {
+          digitalWrite(LED2_PIN, HIGH); // Nóng -> Bật điều hòa (Đèn 2)
+        } else if (temp < 30.0) {
+          digitalWrite(LED2_PIN, LOW);  // Mát -> Tắt điều hòa (Đèn 2)
+        }
+      }
+
+      // Gửi nhiệt độ và độ ẩm
+      client.publish("esp8266/temp", String(temp).c_str());
+      client.publish("esp8266/hum", String(hum).c_str());
     }
-    lastAutoMode2State = autoMode2;
+
+    // 5. GỬI DỮ LIỆU LÊN MQTT BROKER
+    // Gửi trạng thái LDR nếu có thay đổi
+    if (ldrState != lastLdrState) {
+      if (ldrState == HIGH) {
+        client.publish("esp8266/ldr", "DARK");
+        Serial.println("Anh sang: TROI TOI");
+      } else {
+        client.publish("esp8266/ldr", "LIGHT");
+        Serial.println("Anh sang: TROI SANG");
+      }
+      lastLdrState = ldrState;
+    }
+
+    // Gửi trạng thái thực tế của LED 1 nếu có thay đổi
+    int currentLedState = digitalRead(LED_PIN);
+    if (currentLedState != lastLedState) {
+      if (currentLedState == HIGH) {
+        client.publish("esp8266/led/state", "ON");
+      } else {
+        client.publish("esp8266/led/state", "OFF");
+      }
+      lastLedState = currentLedState;
+    }
+
+    // Gửi trạng thái thực tế của LED 2 nếu có thay đổi
+    int currentLed2State = digitalRead(LED2_PIN);
+    if (currentLed2State != lastLed2State) {
+      if (currentLed2State == HIGH) {
+        client.publish("esp8266/led2/state", "ON");
+      } else {
+        client.publish("esp8266/led2/state", "OFF");
+      }
+      lastLed2State = currentLed2State;
+    }
+
+    // Gửi trạng thái chế độ Tự động LED 1 nếu có thay đổi
+    if (autoMode != lastAutoModeState) {
+      if (autoMode) {
+        client.publish("esp8266/automode/state", "ON");
+      } else {
+        client.publish("esp8266/automode/state", "OFF");
+      }
+      lastAutoModeState = autoMode;
+    }
+
+    // Gửi trạng thái chế độ Tự động LED 2 nếu có thay đổi
+    if (autoMode2 != lastAutoMode2State) {
+      if (autoMode2) {
+        client.publish("esp8266/automode2/state", "ON");
+      } else {
+        client.publish("esp8266/automode2/state", "OFF");
+      }
+      lastAutoMode2State = autoMode2;
+    }
+
+    // Monitor ra màn hình Serial
+    Serial.print("Temp: ");
+    Serial.print(temp);
+    Serial.print(" | Hum: ");
+    Serial.print(hum);
+    Serial.print(" | LDR: ");
+    Serial.print(ldrState == HIGH ? "DARK" : "LIGHT");
+    Serial.print(" | LED 1: ");
+    Serial.print(currentLedState == HIGH ? "ON" : "OFF");
+    Serial.print(" | LED 2: ");
+    Serial.println(currentLed2State == HIGH ? "ON" : "OFF");
   }
-
-  // Monitor ra màn hình Serial
-  Serial.print("Temp: ");
-  Serial.print(temp);
-  Serial.print(" | Hum: ");
-  Serial.print(hum);
-  Serial.print(" | LDR: ");
-  Serial.print(ldrState == HIGH ? "DARK" : "LIGHT");
-  Serial.print(" | LED 1: ");
-  Serial.print(currentLedState == HIGH ? "ON" : "OFF");
-  Serial.print(" | LED 2: ");
-  Serial.println(currentLed2State == HIGH ? "ON" : "OFF");
-
-  delay(2000);
 }
