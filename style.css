@@ -669,101 +669,127 @@ input:checked + .slider:before { transform: translateX(20px); }
 
 /* Responsive UI Adjustments for Mobile */
 @media (max-width: 768px) {
+  /* Page Container padding */
+  .main {
+    padding: 16px 10px 32px;
+    gap: 24px;
+  }
+
   /* Sensor Cards responsive updates */
+  .cards-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+  
   .card {
-    padding: 12px 10px;
-    gap: 10px;
-    border-radius: 16px;
+    padding: 10px 6px;
+    gap: 6px;
+    border-radius: 12px;
   }
   
   .card-icon-wrap {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
   }
   
   .card-icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
   }
   
   .card-label {
-    font-size: 0.72rem;
+    font-size: 0.65rem;
   }
   
   .card-value {
-    font-size: 1.6rem;
+    font-size: 1.25rem;
   }
   
   #ldrValue {
-    font-size: 1.1rem;
-    margin-top: 6px;
-    margin-bottom: 4px;
+    font-size: 0.95rem;
+    margin-top: 4px;
+    margin-bottom: 2px;
     white-space: nowrap;
   }
   
   .card-unit {
-    font-size: 1rem;
+    font-size: 0.85rem;
   }
   
   .card-topic {
-    font-size: 0.58rem;
-    margin-top: 4px;
+    font-size: 0.52rem;
+    margin-top: 2px;
   }
   
   /* Control Cards responsive updates (Keep side-by-side) */
+  .control-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
   .control-card {
-    padding: 16px 12px;
-    gap: 16px;
+    padding: 12px 8px;
+    gap: 12px;
+    border-radius: 12px;
   }
   
   .control-header {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 12px;
+    gap: 10px;
   }
   
   .led-status-wrap {
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
   
   .led-bulb {
-    width: 48px;
-    height: 48px;
+    width: 38px;
+    height: 38px;
   }
   
   .led-bulb svg {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
   }
   
   .led-state {
-    font-size: 1.1rem;
+    font-size: 0.85rem;
   }
   
   .mode-selector {
     min-width: 0;
     width: 100%;
+    padding: 2px;
+    gap: 2px;
+    border-radius: 8px;
   }
   
   .mode-btn {
-    padding: 8px 4px;
-    font-size: 0.75rem;
+    padding: 6px 2px;
+    font-size: 0.68rem;
+    border-radius: 6px;
   }
   
   .btn-group {
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     width: 100%;
   }
   
   .btn {
     width: 100%;
     min-width: 0;
-    padding: 10px 8px;
-    font-size: 0.85rem;
+    padding: 8px 4px;
+    font-size: 0.75rem;
+    border-radius: 8px;
+  }
+  .btn-icon {
+    width: 14px;
+    height: 14px;
   }
 }
 

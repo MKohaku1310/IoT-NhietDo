@@ -370,11 +370,11 @@ const MOON_SVG = `<path d="M12 3a9 9 0 1 0 9 9 9.75 9.75 0 0 0-9-9Z" stroke="cur
 
 function updateLdrUI(state) {
   if (state === 'DARK') {
-    ldrValue.textContent = 'Trời tối';
+    ldrValue.textContent = 'Tối';
     cardLdr.classList.add('dark-mode');
     ldrIcon.innerHTML = MOON_SVG;
   } else {
-    ldrValue.textContent = 'Trời sáng';
+    ldrValue.textContent = 'Sáng';
     cardLdr.classList.remove('dark-mode');
     ldrIcon.innerHTML = SUN_SVG;
   }
@@ -394,13 +394,13 @@ function updateLedUI(state) {
     ledBulb.classList.remove('off');
     ledState.classList.add('on');
     ledState.classList.remove('off');
-    ledState.textContent = '💡 Đèn ĐANG BẬT';
+    ledState.textContent = '💡 ĐANG BẬT';
   } else {
     ledBulb.classList.add('off');
     ledBulb.classList.remove('on');
     ledState.classList.add('off');
     ledState.classList.remove('on');
-    ledState.textContent = '🌑 Đèn ĐANG TẮT';
+    ledState.textContent = '🌑 ĐANG TẮT';
   }
 }
 

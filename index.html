@@ -15,7 +15,7 @@
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
   <!-- Ambient background container for weather effects -->
@@ -92,7 +92,7 @@
           <div class="card-body">
             <span class="card-label">Cảm biến ánh sáng</span>
             <div class="card-value-row">
-              <span class="card-value" id="ldrValue">Đang tải...</span>
+              <span class="card-value" id="ldrValue">Đang tải</span>
             </div>
             <span class="card-topic">esp8266/ldr</span>
           </div>
@@ -137,7 +137,7 @@
 
             <!-- Mode Selector: Auto vs Manual -->
             <div class="mode-selector" id="modeSelector1">
-              <button class="mode-btn active" id="btnModeAuto1">Tự động (LDR)</button>
+              <button class="mode-btn active" id="btnModeAuto1">Tự động</button>
               <button class="mode-btn" id="btnModeManual1">Thủ công</button>
             </div>
           </div>
@@ -180,7 +180,7 @@
 
             <!-- Mode Selector: Auto vs Manual -->
             <div class="mode-selector mode-selector--ac" id="modeSelector2">
-              <button class="mode-btn active" id="btnModeAuto2">Tự động (>=33°C)</button>
+              <button class="mode-btn active" id="btnModeAuto2">Tự động</button>
               <button class="mode-btn" id="btnModeManual2">Thủ công</button>
             </div>
           </div>
@@ -264,6 +264,6 @@
     <p>ESP8266 · MQTT · IoT Dashboard &nbsp;|&nbsp; PTIT</p>
   </footer>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
