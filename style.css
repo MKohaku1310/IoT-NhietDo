@@ -287,12 +287,12 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* ======= Custom styling for LED2 / Air Conditioner Grid & Card ======= */
 .control-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 20px;
 }
 @media (max-width: 768px) {
   .control-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 }
@@ -721,10 +721,10 @@ input:checked + .slider:before { transform: translateX(20px); }
     margin-top: 2px;
   }
   
-  /* Control Cards responsive updates (Keep side-by-side) */
+  /* Control Cards responsive updates */
   .control-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .control-card {
@@ -792,4 +792,74 @@ input:checked + .slider:before { transform: translateX(20px); }
     height: 14px;
   }
 }
+
+/* ======= Custom styling for LED3 / Mist Generator Card ======= */
+.control-card--mist {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+  box-shadow: 0 4px 16px rgba(168,85,247,.10), 0 1px 4px rgba(0,0,0,.06);
+}
+.control-card--mist:hover {
+  border-color: #d8b4fe;
+  box-shadow: 0 8px 32px rgba(168,85,247,.15), 0 2px 8px rgba(0,0,0,.08);
+}
+.mode-selector--mist {
+  background: #f3e8ff;
+  border-color: #e9d5ff;
+}
+.mode-selector--mist .mode-btn {
+  color: #6b21a8;
+}
+.mode-selector--mist .mode-btn.active {
+  background: #fff;
+  color: #a855f7;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.12);
+}
+.led-bulb--mist.on {
+  background: #f3e8ff;
+  border-color: #c084fc;
+  box-shadow: 0 0 24px rgba(168,85,247,.4);
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.led-bulb--mist.on svg {
+  stroke: #a855f7;
+  animation: spin 3s linear infinite;
+}
+.led-bulb--mist.off {
+  background: #ffe4e6;
+  border-color: #f87171;
+  box-shadow: none;
+}
+.led-bulb--mist.off svg {
+  stroke: #f87171;
+}
+.led-state--mist.on {
+  color: #7c3aed;
+}
+.led-state--mist.off {
+  color: #ef4444;
+}
+.btn--on-mist {
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(168,85,247,.35);
+}
+.btn--on-mist:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(168,85,247,.5);
+  transform: translateY(-1px);
+}
+.btn--off-mist {
+  background: linear-gradient(135deg, #9ca3af, #6b7280);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(107,114,128,.25);
+}
+.btn--off-mist:hover:not(:disabled) {
+  background: linear-gradient(135deg, #f87171, #ef4444);
+  box-shadow: 0 6px 20px rgba(239,68,68,.3);
+  transform: translateY(-1px);
+}
+
 

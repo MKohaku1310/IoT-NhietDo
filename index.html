@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>IoT Dashboard – ESP8266</title>
-  <meta name="description" content="Dashboard giám sát nhiệt độ, độ ẩm và điều khiển LED qua MQTT – ESP8266" />
+  <title>IoT Dashboard – ESP32-C3</title>
+  <meta name="description" content="Dashboard giám sát nhiệt độ, độ ẩm và điều khiển LED qua MQTT – ESP32-C3" />
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -58,7 +58,7 @@
               <span class="card-value" id="tempValue">--</span>
               <span class="card-unit">°C</span>
             </div>
-            <span class="card-topic">esp8266/temp</span>
+            <span class="card-topic">esp32/temp</span>
           </div>
           <div class="card-glow"></div>
         </article>
@@ -76,12 +76,12 @@
               <span class="card-value" id="humValue">--</span>
               <span class="card-unit">%</span>
             </div>
-            <span class="card-topic">esp8266/hum</span>
+            <span class="card-topic">esp32/hum</span>
           </div>
           <div class="card-glow"></div>
         </article>
 
-        <!-- Ánh sáng LDR -->
+        <!-- Cường độ ánh sáng BH1750 -->
         <article class="card card--ldr" id="cardLdr">
           <div class="card-icon-wrap">
             <svg class="card-icon" id="ldrIcon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -90,11 +90,12 @@
             </svg>
           </div>
           <div class="card-body">
-            <span class="card-label">Cảm biến ánh sáng</span>
+            <span class="card-label">Cường độ ánh sáng</span>
             <div class="card-value-row">
-              <span class="card-value" id="ldrValue">Đang tải</span>
+              <span class="card-value" id="ldrValue">--</span>
+              <span class="card-unit">lx</span>
             </div>
-            <span class="card-topic">esp8266/ldr</span>
+            <span class="card-topic">esp32/lux</span>
           </div>
           <div class="card-glow"></div>
         </article>
@@ -204,6 +205,49 @@
           </div>
         </div>
 
+        <!-- LED 3 Card (Quạt Thông Gió / Độ ẩm) -->
+        <div class="control-card control-card--mist">
+          <div class="control-header">
+            <div class="led-status-wrap">
+              <div class="led-bulb led-bulb--mist" id="led3Bulb" aria-label="Trạng thái LED 3">
+                <!-- Fan / Propeller icon -->
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/>
+                  <path d="M12 9c1.66-2.5 4.5-2.5 4.5 0s-2.84 2.5-4.5 0ZM12 15c-1.66 2.5-4.5 2.5-4.5 0s2.84-2.5 4.5 0ZM9 12c-2.5-1.66-2.5-4.5 0-4.5s2.5 2.84 0 4.5ZM15 12c2.5 1.66 2.5 4.5 0 4.5s-2.5-2.84 0-4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div class="led-info">
+                <span class="led-title">Quạt Thông Gió (LED 3)</span>
+                <span class="led-state led-state--mist" id="led3State">Chưa xác định</span>
+              </div>
+            </div>
+
+            <!-- Mode Selector: Auto vs Manual -->
+            <div class="mode-selector mode-selector--mist" id="modeSelector3">
+              <button class="mode-btn active" id="btnModeAuto3">Tự động</button>
+              <button class="mode-btn" id="btnModeManual3">Thủ công</button>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn--on-mist" id="btn3On" aria-label="Bật quạt">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              Bật quạt
+            </button>
+
+            <button class="btn btn--off-mist" id="btn3Off" aria-label="Tắt quạt">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.8"/>
+                <path d="M8 12h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              Tắt quạt
+            </button>
+          </div>
+        </div>
+
       </div>
 
       <!-- Publish Log -->
@@ -244,11 +288,11 @@
         </div>
         <div class="info-row">
           <span class="info-key">Subscribe (Web)</span>
-          <span class="info-val">esp8266/temp · esp8266/hum · esp8266/ldr · esp8266/led/state · esp8266/automode/state · esp8266/led2/state · esp8266/automode2/state</span>
+          <span class="info-val">esp32/temp · esp32/hum · esp32/lux · esp32/led/state · esp32/automode/state · esp32/led2/state · esp32/automode2/state · esp32/led3/state · esp32/automode3/state</span>
         </div>
         <div class="info-row">
           <span class="info-key">Publish (Web)</span>
-          <span class="info-val">esp8266/led · esp8266/automode · esp8266/led2 · esp8266/automode2</span>
+          <span class="info-val">esp32/led · esp32/automode · esp32/led2 · esp32/automode2 · esp32/led3 · esp32/automode3</span>
         </div>
         <div class="info-row">
           <span class="info-key">Cập nhật lúc</span>
@@ -261,7 +305,7 @@
 
   <!-- ===== FOOTER ===== -->
   <footer class="footer">
-    <p>ESP8266 · MQTT · IoT Dashboard &nbsp;|&nbsp; PTIT</p>
+    <p>ESP32-C3 · MQTT · IoT Dashboard &nbsp;|&nbsp; PTIT</p>
   </footer>
 
   <script src="app.js?v=3"></script>

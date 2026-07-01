@@ -1,7 +1,7 @@
 /**
  * app.js – IoT Dashboard MQTT Client
- * Kết nối MQTT qua WebSocket, nhận dữ liệu cảm biến (Nhiệt độ, độ ẩm, LDR)
- * và điều khiển LED (Tự động/Thủ công).
+ * Kết nối MQTT qua WebSocket, nhận dữ liệu cảm biến (Nhiệt độ, độ ẩm, Lux)
+ * và điều khiển 3 LED (Tự động/Thủ công).
  */
 
 // ─────────────────────────────────────────
@@ -12,22 +12,26 @@ const BROKER_URL = 'wss://broker.hivemq.com:8884/mqtt';
 const MQTT_OPTIONS = {
   clientId: 'iot_dashboard_' + Math.random().toString(16).slice(2, 10),
   clean: true,
-  reconnectPeriod: 3000,   // tự động kết nối lại sau 3 giây
+  reconnectPeriod: 3000,   // Tự động kết nối lại sau 3 giây
   connectTimeout: 8000,
 };
 
-// Các Topic giao tiếp
-const TOPIC_TEMP        = 'esp8266/temp';
-const TOPIC_HUM         = 'esp8266/hum';
-const TOPIC_LDR         = 'esp8266/ldr';             // Nhận trạng thái ánh sáng (DARK / LIGHT)
-const TOPIC_LED_CMD     = 'esp8266/led';             // Gửi lệnh điều khiển LED (ON / OFF)
-const TOPIC_LED_STATE   = 'esp8266/led/state';       // Nhận phản hồi trạng thái LED thực tế (ON / OFF)
-const TOPIC_AUTO_CMD    = 'esp8266/automode';        // Gửi lệnh bật/tắt chế độ tự động (ON / OFF)
-const TOPIC_AUTO_STATE  = 'esp8266/automode/state';  // Nhận phản hồi chế độ tự động thực tế (ON / OFF)
-const TOPIC_LED2_CMD    = 'esp8266/led2';            // Gửi lệnh điều khiển LED2 (ON / OFF)
-const TOPIC_LED2_STATE  = 'esp8266/led2/state';      // Nhận phản hồi trạng thái LED2 thực tế (ON / OFF)
-const TOPIC_AUTO2_CMD   = 'esp8266/automode2';       // Gửi lệnh bật/tắt chế độ tự động 2 (ON / OFF)
-const TOPIC_AUTO2_STATE = 'esp8266/automode2/state'; // Nhận phản hồi chế độ tự động 2 thực tế (ON / OFF)
+// Các Topic giao tiếp MQTT
+const TOPIC_TEMP        = 'esp32/temp';
+const TOPIC_HUM         = 'esp32/hum';
+const TOPIC_LUX         = 'esp32/lux';             // Nhận cường độ ánh sáng (lx) từ BH1750
+const TOPIC_LED_CMD     = 'esp32/led';             // Gửi lệnh điều khiển LED 1 (ON / OFF)
+const TOPIC_LED_STATE   = 'esp32/led/state';       // Nhận phản hồi trạng thái LED 1 thực tế (ON / OFF)
+const TOPIC_AUTO_CMD    = 'esp32/automode';        // Gửi lệnh chế độ tự động LED 1 (ON / OFF)
+const TOPIC_AUTO_STATE  = 'esp32/automode/state';  // Nhận phản hồi chế độ tự động LED 1 thực tế (ON / OFF)
+const TOPIC_LED2_CMD    = 'esp32/led2';            // Gửi lệnh điều khiển LED 2 (ON / OFF)
+const TOPIC_LED2_STATE  = 'esp32/led2/state';      // Nhận phản hồi trạng thái LED 2 thực tế (ON / OFF)
+const TOPIC_AUTO2_CMD   = 'esp32/automode2';       // Gửi lệnh chế độ tự động LED 2 (ON / OFF)
+const TOPIC_AUTO2_STATE = 'esp32/automode2/state'; // Nhận phản hồi chế độ tự động LED 2 thực tế (ON / OFF)
+const TOPIC_LED3_CMD    = 'esp32/led3';            // Gửi lệnh điều khiển LED 3 (ON / OFF)
+const TOPIC_LED3_STATE  = 'esp32/led3/state';      // Nhận phản hồi trạng thái LED 3 thực tế (ON / OFF)
+const TOPIC_AUTO3_CMD   = 'esp32/automode3';       // Gửi lệnh chế độ tự động LED 3 (ON / OFF)
+const TOPIC_AUTO3_STATE = 'esp32/automode3/state'; // Nhận phản hồi chế độ tự động LED 3 thực tế (ON / OFF)
 
 // ─────────────────────────────────────────
 // 2. LẤY CÁC PHẦN TỬ DOM
@@ -39,12 +43,12 @@ const statusLabel     = document.getElementById('statusLabel');
 const tempValue       = document.getElementById('tempValue');
 const humValue        = document.getElementById('humValue');
 
-// Cảm biến ánh sáng
+// Cảm biến ánh sáng BH1750
 const cardLdr         = document.getElementById('cardLdr');
 const ldrValue        = document.getElementById('ldrValue');
 const ldrIcon         = document.getElementById('ldrIcon');
 
-// Ambient Background (Thời tiết)
+// Ambient Background (Hiệu ứng thời tiết nền)
 const ambientBg       = document.getElementById('ambient-bg');
 
 // Điều khiển LED 1 (Ánh sáng)
@@ -63,6 +67,14 @@ const btnModeManual2  = document.getElementById('btnModeManual2');
 const btn2On          = document.getElementById('btn2On');
 const btn2Off         = document.getElementById('btn2Off');
 
+// Điều khiển LED 3 (Quạt Thông Gió / Độ ẩm)
+const led3Bulb        = document.getElementById('led3Bulb');
+const led3State       = document.getElementById('led3State');
+const btnModeAuto3    = document.getElementById('btnModeAuto3');
+const btnModeManual3  = document.getElementById('btnModeManual3');
+const btn3On          = document.getElementById('btn3On');
+const btn3Off         = document.getElementById('btn3Off');
+
 // Nhật ký & Biểu đồ
 const systemLogs      = document.getElementById('systemLogs');
 const btnClearLogs    = document.getElementById('btnClearLogs');
@@ -79,10 +91,8 @@ let tempWarningLogged = false;
 // Trạng thái cũ để tránh ghi trùng log thiết bị
 let lastLedStateText = "";
 let lastLed2StateText = "";
+let lastLed3StateText = "";
 
-// ─────────────────────────────────────────
-// 3. CẬP NHẬT UI TRẠNG THÁI KẾT NỐI
-// ─────────────────────────────────────────
 // ─────────────────────────────────────────
 // 3. CẬP NHẬT UI TRẠNG THÁI KẾT NỐI & CHẾ ĐỘ
 // ─────────────────────────────────────────
@@ -123,6 +133,24 @@ function updateModeUI(deviceNum, mode) {
       btn2On.classList.remove('btn-locked');
       btn2Off.classList.remove('btn-locked');
     }
+  } else if (deviceNum === 3) {
+    if (mode === 'auto') {
+      btnModeAuto3.classList.add('active');
+      btnModeManual3.classList.remove('active');
+      btn3On.disabled = true;
+      btn3Off.disabled = true;
+      btn3On.classList.add('btn-locked');
+      btn3Off.classList.add('btn-locked');
+    } else {
+      btnModeAuto3.classList.remove('active');
+      btnModeManual3.classList.add('active');
+      if (statusBadge.classList.contains('connected')) {
+        btn3On.disabled = false;
+        btn3Off.disabled = false;
+      }
+      btn3On.classList.remove('btn-locked');
+      btn3Off.classList.remove('btn-locked');
+    }
   }
 }
 
@@ -135,6 +163,8 @@ function setConnected() {
   btnModeManual1.disabled = false;
   btnModeAuto2.disabled = false;
   btnModeManual2.disabled = false;
+  btnModeAuto3.disabled = false;
+  btnModeManual3.disabled = false;
 
   // Khôi phục trạng thái nút bấm thủ công theo chế độ hiện tại
   const isAuto1 = btnModeAuto1.classList.contains('active');
@@ -144,6 +174,10 @@ function setConnected() {
   const isAuto2 = btnModeAuto2.classList.contains('active');
   btn2On.disabled  = isAuto2;
   btn2Off.disabled = isAuto2;
+
+  const isAuto3 = btnModeAuto3.classList.contains('active');
+  btn3On.disabled  = isAuto3;
+  btn3Off.disabled = isAuto3;
 
   addLog('Đã kết nối thành công tới broker MQTT!', 'success');
 }
@@ -163,6 +197,11 @@ function setDisconnected() {
   btnModeAuto2.disabled = true;
   btnModeManual2.disabled = true;
 
+  btn3On.disabled  = true;
+  btn3Off.disabled = true;
+  btnModeAuto3.disabled = true;
+  btnModeManual3.disabled = true;
+
   addLog('Đang ngắt kết nối / Mất tín hiệu mạng!', 'danger');
 }
 
@@ -180,16 +219,21 @@ function setConnecting() {
   btnModeAuto2.disabled = true;
   btnModeManual2.disabled = true;
 
+  btn3On.disabled  = true;
+  btn3Off.disabled = true;
+  btnModeAuto3.disabled = true;
+  btnModeManual3.disabled = true;
+
   addLog('Đang thiết lập kết nối tới broker MQTT...', 'info');
 }
 
 // ─────────────────────────────────────────
-// 4. CẬP NHẬT GIÁ TRỊ CẢM BIẾN (FLASH ANIMATION)
+// 4. CẬP NHẬT GIÁ TRỊ CẢM BIẾN (HIỆU ỨNG NHẤP NHÁY)
 // ─────────────────────────────────────────
 function updateSensorValue(el, newValue) {
   el.textContent = newValue;
   el.classList.remove('updated');
-  void el.offsetWidth; // trigger reflow
+  void el.offsetWidth; // Trigger reflow để kích hoạt lại animation
   el.classList.add('updated');
 }
 
@@ -225,7 +269,7 @@ function initChart() {
   const humCtx = document.getElementById('humChart');
   if (!tempCtx || !humCtx) return;
   
-  // Chart 1: Temperature Chart
+  // Biểu đồ Nhiệt độ
   tempChart = new Chart(tempCtx.getContext('2d'), {
     type: 'line',
     data: {
@@ -273,7 +317,7 @@ function initChart() {
     }
   });
 
-  // Chart 2: Humidity Chart
+  // Biểu đồ Độ ẩm
   humChart = new Chart(humCtx.getContext('2d'), {
     type: 'line',
     data: {
@@ -325,7 +369,7 @@ function initChart() {
 function addChartPoint(timeLabel, temp, hum) {
   if (!tempChart || !humChart) return;
   
-  // 1. Temperature Chart update
+  // Cập nhật biểu đồ nhiệt độ
   if (temp !== null) {
     const tempLabels = tempChart.data.labels;
     const tempDataset = tempChart.data.datasets[0].data;
@@ -343,7 +387,7 @@ function addChartPoint(timeLabel, temp, hum) {
     tempChart.update('none');
   }
   
-  // 2. Humidity Chart update
+  // Cập nhật biểu đồ độ ẩm
   if (hum !== null) {
     const humLabels = humChart.data.labels;
     const humDataset = humChart.data.datasets[0].data;
@@ -363,26 +407,22 @@ function addChartPoint(timeLabel, temp, hum) {
 }
 
 // ─────────────────────────────────────────
-// 5. CẬP NHẬT GIAO DIỆN ÁNH SÁNG LDR
+// 5. CẬP NHẬT GIAO DIỆN ÁNH SÁNG LUX
 // ─────────────────────────────────────────
 const SUN_SVG = `<circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>`;
 const MOON_SVG = `<path d="M12 3a9 9 0 1 0 9 9 9.75 9.75 0 0 0-9-9Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`;
 
-function updateLdrUI(state) {
-  if (state === 'DARK') {
-    ldrValue.textContent = 'Tối';
+function updateLdrUI(lux) {
+  updateSensorValue(ldrValue, lux.toFixed(1));
+  
+  // Cập nhật chủ đề Sáng/Tối cho card dựa trên ngưỡng 50 lx
+  if (lux < 50.0) {
     cardLdr.classList.add('dark-mode');
     ldrIcon.innerHTML = MOON_SVG;
   } else {
-    ldrValue.textContent = 'Sáng';
     cardLdr.classList.remove('dark-mode');
     ldrIcon.innerHTML = SUN_SVG;
   }
-  
-  // Flash animation
-  ldrValue.classList.remove('updated');
-  void ldrValue.offsetWidth;
-  ldrValue.classList.add('updated');
 }
 
 // ─────────────────────────────────────────
@@ -404,6 +444,7 @@ function updateLedUI(state) {
   }
 }
 
+// Hiệu ứng hạt tuyết rơi (Đèn điều hòa bật)
 let snowInterval = null;
 
 function startSnowing() {
@@ -417,8 +458,8 @@ function startSnowing() {
     snowflake.textContent = flakes[Math.floor(Math.random() * flakes.length)];
     
     const startX = Math.random() * 100;
-    const size = Math.random() * 0.8 + 0.6; // 0.6rem đến 1.4rem
-    const duration = Math.random() * 5 + 5; // 5s đến 10s
+    const size = Math.random() * 0.8 + 0.6;
+    const duration = Math.random() * 5 + 5;
     const opacity = Math.random() * 0.7 + 0.3;
     
     snowflake.style.left = `${startX}vw`;
@@ -463,12 +504,26 @@ function updateLed2UI(state) {
   }
 }
 
+function updateLed3UI(state) {
+  if (state === 'ON') {
+    led3Bulb.classList.add('on');
+    led3Bulb.classList.remove('off');
+    led3State.classList.add('on');
+    led3State.classList.remove('off');
+    led3State.textContent = '🌀 ĐANG BẬT';
+  } else {
+    led3Bulb.classList.add('off');
+    led3Bulb.classList.remove('on');
+    led3State.classList.add('off');
+    led3State.classList.remove('on');
+    led3State.textContent = '🌑 ĐANG TẮT';
+  }
+}
+
 // ─────────────────────────────────────────
-// 7. GỬI LỆNH ĐIỀU KHIỂN
+// 7. GỬI LỆNH ĐIỀU KHIỂN ĐẾN BROKER MQTT
 // ─────────────────────────────────────────
-// ─────────────────────────────────────────
-// 7. GỬI LỆNH ĐIỀU KHIỂN
-// ─────────────────────────────────────────
+
 // Gửi lệnh điều khiển LED 1
 function sendLed(command) {
   if (!client || !client.connected) {
@@ -509,14 +564,34 @@ function sendLed2(command) {
   });
 }
 
-// Gửi lệnh Chế độ Tự động LED 1
+// Gửi lệnh điều khiển LED 3 (Quạt thông gió)
+function sendLed3(command) {
+  if (!client || !client.connected) {
+    publishLogText.textContent = '⚠️ Chưa kết nối MQTT – không thể gửi lệnh!';
+    addLog('Chưa kết nối MQTT – không thể gửi lệnh điều khiển Đèn 3!', 'warning');
+    return;
+  }
+
+  client.publish(TOPIC_LED3_CMD, command, { qos: 1 }, (err) => {
+    if (err) {
+      publishLogText.textContent = `❌ Gửi thất bại: ${err.message}`;
+      addLog(`Gửi lệnh Đèn 3 thất bại: ${err.message}`, 'danger');
+    } else {
+      const time = new Date().toLocaleTimeString('vi-VN');
+      publishLogText.textContent = `✅ Đã gửi lệnh "${command}" → ${TOPIC_LED3_CMD} [${time}]`;
+      addLog(`Đã gửi lệnh "${command}" tới Đèn 3 (Quạt thông gió)`, 'info');
+    }
+  });
+}
+
+// Gửi lệnh bật/tắt Chế độ tự động LED 1
 function sendAutoMode(state) {
   if (!client || !client.connected) return;
   
   const payload = state ? 'ON' : 'OFF';
   client.publish(TOPIC_AUTO_CMD, payload, { qos: 1 }, (err) => {
     if (err) {
-      publishLogText.textContent = `❌ Cập nhật chế độ tự động thất bại!`;
+      publishLogText.textContent = `❌ Cập nhật tự động LED 1 thất bại!`;
       addLog('Cập nhật chế độ tự động Đèn 1 thất bại!', 'danger');
     } else {
       const time = new Date().toLocaleTimeString('vi-VN');
@@ -526,7 +601,7 @@ function sendAutoMode(state) {
   });
 }
 
-// Gửi lệnh Chế độ Tự động LED 2 (Điều hòa)
+// Gửi lệnh bật/tắt Chế độ tự động LED 2 (Điều hòa)
 function sendAutoMode2(state) {
   if (!client || !client.connected) return;
   
@@ -543,33 +618,52 @@ function sendAutoMode2(state) {
   });
 }
 
-// Cập nhật thời gian nhận tin nhắn cuối
+// Gửi lệnh bật/tắt Chế độ tự động LED 3 (Quạt Thông Gió)
+function sendAutoMode3(state) {
+  if (!client || !client.connected) return;
+  
+  const payload = state ? 'ON' : 'OFF';
+  client.publish(TOPIC_AUTO3_CMD, payload, { qos: 1 }, (err) => {
+    if (err) {
+      publishLogText.textContent = `❌ Cập nhật tự động Quạt thông gió thất bại!`;
+      addLog('Cập nhật tự động Quạt thông gió thất bại!', 'danger');
+    } else {
+      const time = new Date().toLocaleTimeString('vi-VN');
+      publishLogText.textContent = `⚙️ Đã chuyển Tự động Quạt thông gió thành "${payload}" [${time}]`;
+      addLog('Đã chuyển Tự động Quạt thông gió thành: ' + payload, 'info');
+    }
+  });
+}
+
+// Cập nhật nhãn thời gian cập nhật lần cuối
 function updateTimestamp() {
   lastUpdate.textContent = new Date().toLocaleTimeString('vi-VN');
 }
 
 // ─────────────────────────────────────────
-// 8. KHỞI TẠO MQTT CLIENT & BIỂU ĐỒ
+// 8. KHỞI TẠO MQTT CLIENT & BIỂU ĐỒ LỊCH SỬ
 // ─────────────────────────────────────────
 initChart();
 setConnecting();
 
 const client = mqtt.connect(BROKER_URL, MQTT_OPTIONS);
 
-// --- Kết nối thành công ---
+// --- Sự kiện: Kết nối thành công ---
 client.on('connect', () => {
   console.log('[MQTT] Connected to', BROKER_URL);
   setConnected();
 
-  // Đăng ký nhận toàn bộ các topic trạng thái của ESP8266
+  // Đăng ký nhận toàn bộ các topic trạng thái của hệ thống
   const topicsToSubscribe = [
     TOPIC_TEMP,
     TOPIC_HUM,
-    TOPIC_LDR,
+    TOPIC_LUX,
     TOPIC_LED_STATE,
     TOPIC_AUTO_STATE,
     TOPIC_LED2_STATE,
-    TOPIC_AUTO2_STATE
+    TOPIC_AUTO2_STATE,
+    TOPIC_LED3_STATE,
+    TOPIC_AUTO3_STATE
   ];
 
   client.subscribe(topicsToSubscribe, { qos: 0 }, (err) => {
@@ -583,7 +677,7 @@ client.on('connect', () => {
   });
 });
 
-// --- Nhận tin nhắn ---
+// --- Sự kiện: Nhận tin nhắn ---
 client.on('message', (topic, message) => {
   const payload = message.toString().trim();
   console.log(`[MQTT] ${topic} → ${payload}`);
@@ -597,7 +691,7 @@ client.on('message', (topic, message) => {
         updateTimestamp();
         addChartPoint(new Date().toLocaleTimeString('vi-VN'), currentTemp, currentHum);
         
-        // Hiệu ứng nền nhiệt độ cao
+        // Hiệu ứng nền màu đỏ nhạt khi nhiệt độ quá cao
         if (ambientBg) {
           if (temp >= 33.0) {
             ambientBg.classList.add('high-temp');
@@ -606,7 +700,7 @@ client.on('message', (topic, message) => {
           }
         }
         
-        // Log cảnh báo nhiệt độ cao (>33 độ C)
+        // Ghi nhật ký cảnh báo nhiệt độ cao (>33 độ C)
         if (temp > 33.0) {
           if (!tempWarningLogged) {
             addLog(`⚠️ CẢNH BÁO: Nhiệt độ vượt ngưỡng nguy hiểm (${temp.toFixed(1)}°C)!`, 'danger');
@@ -631,9 +725,12 @@ client.on('message', (topic, message) => {
       }
       break;
 
-    case TOPIC_LDR:
-      updateLdrUI(payload);
-      updateTimestamp();
+    case TOPIC_LUX:
+      const lux = parseFloat(payload);
+      if (!isNaN(lux)) {
+        updateLdrUI(lux);
+        updateTimestamp();
+      }
       break;
 
     case TOPIC_LED_STATE:
@@ -645,7 +742,6 @@ client.on('message', (topic, message) => {
       break;
 
     case TOPIC_AUTO_STATE:
-      // Đồng bộ nút chế độ tự động trên web với ESP8266
       updateModeUI(1, payload === 'ON' ? 'auto' : 'manual');
       break;
 
@@ -658,13 +754,24 @@ client.on('message', (topic, message) => {
       break;
 
     case TOPIC_AUTO2_STATE:
-      // Đồng bộ nút chế độ tự động 2 trên web với ESP8266
       updateModeUI(2, payload === 'ON' ? 'auto' : 'manual');
+      break;
+
+    case TOPIC_LED3_STATE:
+      updateLed3UI(payload);
+      if (lastLed3StateText !== payload) {
+        addLog(`🌀 Quạt Thông Gió (LED 3) đã chuyển sang: ${payload === 'ON' ? 'BẬT' : 'TẮT'}`, payload === 'ON' ? 'success' : 'info');
+        lastLed3StateText = payload;
+      }
+      break;
+
+    case TOPIC_AUTO3_STATE:
+      updateModeUI(3, payload === 'ON' ? 'auto' : 'manual');
       break;
   }
 });
 
-// --- Quản lý kết nối ---
+// --- Quản lý các trạng thái lỗi và mất kết nối ---
 client.on('offline', () => {
   console.warn('[MQTT] Offline');
   setDisconnected();
@@ -688,11 +795,12 @@ client.on('close', () => {
 // ─────────────────────────────────────────
 // 9. GẮN SỰ KIỆN ĐIỀU KHIỂN TRÊN WEB
 // ─────────────────────────────────────────
-// Nút bấm Bật/Tắt LED 1
+
+// Sự kiện nút bấm Bật/Tắt thủ công LED 1
 btnOn.addEventListener('click',  () => sendLed('ON'));
 btnOff.addEventListener('click', () => sendLed('OFF'));
 
-// Sự kiện đổi chế độ LED 1
+// Sự kiện đổi chế độ tự động/thủ công LED 1
 btnModeAuto1.addEventListener('click', () => {
   sendAutoMode(true);
   updateModeUI(1, 'auto');
@@ -702,11 +810,11 @@ btnModeManual1.addEventListener('click', () => {
   updateModeUI(1, 'manual');
 });
 
-// Nút bấm Bật/Tắt LED 2
+// Sự kiện nút bấm Bật/Tắt thủ công LED 2
 btn2On.addEventListener('click',  () => sendLed2('ON'));
 btn2Off.addEventListener('click', () => sendLed2('OFF'));
 
-// Sự kiện đổi chế độ LED 2
+// Sự kiện đổi chế độ tự động/thủ công LED 2
 btnModeAuto2.addEventListener('click', () => {
   sendAutoMode2(true);
   updateModeUI(2, 'auto');
@@ -716,7 +824,21 @@ btnModeManual2.addEventListener('click', () => {
   updateModeUI(2, 'manual');
 });
 
-// Nút xóa nhật ký
+// Sự kiện nút bấm Bật/Tắt thủ công LED 3
+btn3On.addEventListener('click',  () => sendLed3('ON'));
+btn3Off.addEventListener('click', () => sendLed3('OFF'));
+
+// Sự kiện đổi chế độ tự động/thủ công LED 3
+btnModeAuto3.addEventListener('click', () => {
+  sendAutoMode3(true);
+  updateModeUI(3, 'auto');
+});
+btnModeManual3.addEventListener('click', () => {
+  sendAutoMode3(false);
+  updateModeUI(3, 'manual');
+});
+
+// Nút xóa nhật ký hoạt động
 if (btnClearLogs) {
   btnClearLogs.addEventListener('click', () => {
     systemLogs.innerHTML = '';
