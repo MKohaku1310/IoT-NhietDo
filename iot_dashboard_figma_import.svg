@@ -1,0 +1,234 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" style="background:#f3f4f6; font-family:'Inter', sans-serif;">
+  <defs>
+    <!-- Fonts -->
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap');
+      .title-text { font-size: 22px; font-weight: 700; fill: #1e293b; }
+      .label-text { font-size: 14px; font-weight: 500; fill: #64748b; }
+      .value-text { font-size: 36px; font-weight: 800; fill: #0f172a; }
+      .unit-text { font-size: 20px; font-weight: 600; fill: #64748b; }
+      .topic-text { font-size: 11px; font-weight: 400; fill: #94a3b8; }
+      .btn-text { font-size: 15px; font-weight: 600; fill: #ffffff; }
+      .btn-text-off { font-size: 15px; font-weight: 600; fill: #475569; }
+      .log-text { font-size: 12px; font-weight: 400; fill: #334155; }
+      .card-bg { fill: #ffffff; rx: 16px; filter: drop-shadow(0px 8px 24px rgba(15, 23, 42, 0.04)); stroke: #e2e8f0; stroke-width: 1; }
+    </style>
+
+    <!-- Gradients -->
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7" />
+      <stop offset="100%" stop-color="#7c3aed" />
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="chartAreaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0" />
+    </linearGradient>
+  </defs>
+
+  <!-- 1. HEADER -->
+  <g id="Header" transform="translate(80, 40)">
+    <!-- Logo & Title -->
+    <circle cx="20" cy="20" r="16" fill="#d1fae5" />
+    <path d="M15 25C15 20 20 15 25 15C25 20 20 25 15 25Z" fill="#10b981" />
+    <text x="48" y="27" class="title-text">IoT Dashboard</text>
+    <text x="195" y="26" font-size="14" font-weight="600" fill="#94a3b8">ESP32-C3</text>
+
+    <!-- Connection Status Badge -->
+    <g id="StatusBadge" transform="translate(1120, 5)">
+      <rect width="120" height="30" rx="15" fill="#d1fae5" />
+      <circle cx="20" cy="15" r="5" fill="#10b981" />
+      <text x="35" y="20" font-size="13" font-weight="600" fill="#065f46">Đã kết nối</text>
+    </g>
+  </g>
+
+  <!-- 2. SENSOR CARDS ROW -->
+  <g id="SensorCards" transform="translate(80, 110)">
+    <!-- Temp Card -->
+    <g id="CardTemp" transform="translate(0, 0)">
+      <rect width="380" height="150" class="card-bg" />
+      <circle cx="50" cy="50" r="22" fill="#ffe4e6" />
+      <!-- Thermometer Icon -->
+      <path d="M50 36v16M47 42h6M46 49.5a5 5 0 1 0 8 0V40a4 4 0 1 0-8 0v9.5Z" stroke="#f43f5e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+      <text x="88" y="44" class="label-text">Nhiệt độ</text>
+      <text x="88" y="85" class="value-text">28.5<tspan class="unit-text"> °C</tspan></text>
+      <text x="88" y="120" class="topic-text">Topic: esp32/temp</text>
+    </g>
+
+    <!-- Humid Card -->
+    <g id="CardHumid" transform="translate(420, 0)">
+      <rect width="380" height="150" class="card-bg" />
+      <circle cx="50" cy="50" r="22" fill="#dbeafe" />
+      <!-- Droplet Icon -->
+      <path d="M50 34c0 0 10 12 10 17a10 10 0 1 1-20 0c0-5 10-17 10-17Z" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" fill="none" />
+      <text x="88" y="44" class="label-text">Độ ẩm</text>
+      <text x="88" y="85" class="value-text">65.0<tspan class="unit-text"> %</tspan></text>
+      <text x="88" y="120" class="topic-text">Topic: esp32/hum</text>
+    </g>
+
+    <!-- Light Card -->
+    <g id="CardLight" transform="translate(840, 0)">
+      <rect width="380" height="150" class="card-bg" />
+      <circle cx="50" cy="50" r="22" fill="#fef9c3" />
+      <!-- Sun Icon -->
+      <circle cx="50" cy="50" r="7" stroke="#ca8a04" stroke-width="2" fill="none" />
+      <path d="M50 34v4M50 62v4M34 50h4M62 50h4M39 39l3 3M58 58l3 3M39 61l3-3M58 42l3 3" stroke="#ca8a04" stroke-width="2" stroke-linecap="round" />
+      <text x="88" y="44" class="label-text">Ánh sáng</text>
+      <text x="88" y="85" class="value-text">120<tspan class="unit-text"> lx</tspan></text>
+      <text x="88" y="120" class="topic-text">Topic: esp32/lux</text>
+    </g>
+  </g>
+
+  <!-- 3. CONTROL CARDS ROW -->
+  <g id="ControlCards" transform="translate(80, 290)">
+    <!-- Light Bulb Control -->
+    <g id="ControlLight" transform="translate(0, 0)">
+      <rect width="380" height="280" class="card-bg" />
+      <circle cx="55" cy="55" r="25" fill="#fef9c3" />
+      <!-- Bulb Icon -->
+      <path d="M55 38a10 10 0 0 0-7 17.07V62h14v-6.93A10 10 0 0 0 55 38Z" stroke="#eab308" stroke-width="2" stroke-linejoin="round" fill="none" />
+      <path d="M51 66h8M53 70h4" stroke="#eab308" stroke-width="2" stroke-linecap="round" />
+      <text x="96" y="52" class="label-text" font-weight="700">Đèn Chiếu Sáng (LED 1)</text>
+      <text x="96" y="74" class="label-text" fill="#eab308" font-weight="700">💡 ĐANG BẬT</text>
+
+      <!-- Toggle Auto/Manual -->
+      <g transform="translate(230, 35)">
+        <rect width="120" height="34" rx="17" fill="#f1f5f9" />
+        <rect x="2" y="2" width="60" height="30" rx="15" fill="#ffffff" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.06))" />
+        <text x="14" y="21" font-size="12" font-weight="700" fill="#0f172a">T.Động</text>
+        <text x="70" y="21" font-size="12" font-weight="600" fill="#64748b">Thủ công</text>
+      </g>
+
+      <!-- Buttons -->
+      <g transform="translate(30, 120)">
+        <!-- ON Button (Active) -->
+        <rect width="320" height="48" rx="12" fill="url(#greenGrad)" />
+        <text x="160" y="29" class="btn-text" text-anchor="middle">Bật đèn 1</text>
+      </g>
+      <g transform="translate(30, 185)">
+        <!-- OFF Button (Inactive) -->
+        <rect width="320" height="48" rx="12" fill="#e2e8f0" />
+        <text x="160" y="29" class="btn-text-off" text-anchor="middle">Tắt đèn 1</text>
+      </g>
+      <text x="30" y="260" class="topic-text">Publish: esp32/led &amp; esp32/automode</text>
+    </g>
+
+    <!-- AC Control -->
+    <g id="ControlAC" transform="translate(420, 0)">
+      <rect width="380" height="280" class="card-bg" />
+      <circle cx="55" cy="55" r="25" fill="#dbeafe" />
+      <!-- Snowflake Icon -->
+      <path d="M55 35v40M35 55h40M41 41l28 28M41 69l28-28" stroke="#2563eb" stroke-width="2" stroke-linecap="round" />
+      <path d="M49 39l6 6 6-6M61 49l-6 6 6 6M49 71l6-6 6 6M39 61l6-6-6-6" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" fill="none" />
+      <text x="96" y="52" class="label-text" font-weight="700">Điều Hòa (LED 2)</text>
+      <text x="96" y="74" class="label-text" fill="#64748b">🌑 ĐANG TẮT</text>
+
+      <!-- Toggle Auto/Manual -->
+      <g transform="translate(230, 35)">
+        <rect width="120" height="34" rx="17" fill="#f1f5f9" />
+        <rect x="2" y="2" width="60" height="30" rx="15" fill="#ffffff" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.06))" />
+        <text x="14" y="21" font-size="12" font-weight="700" fill="#0f172a">T.Động</text>
+        <text x="70" y="21" font-size="12" font-weight="600" fill="#64748b">Thủ công</text>
+      </g>
+
+      <!-- Buttons (Locked in Auto Mode) -->
+      <g transform="translate(30, 120)" opacity="0.5">
+        <rect width="320" height="48" rx="12" fill="#cbd5e1" />
+        <text x="160" y="29" class="btn-text-off" text-anchor="middle">Bật điều hòa</text>
+      </g>
+      <g transform="translate(30, 185)" opacity="0.5">
+        <rect width="320" height="48" rx="12" fill="#cbd5e1" />
+        <text x="160" y="29" class="btn-text-off" text-anchor="middle">Tắt điều hòa</text>
+      </g>
+      <text x="30" y="260" class="topic-text">Publish: esp32/led2 &amp; esp32/automode2</text>
+    </g>
+
+    <!-- Fan Control -->
+    <g id="ControlFan" transform="translate(840, 0)">
+      <rect width="380" height="280" class="card-bg" />
+      <circle cx="55" cy="55" r="25" fill="#f3e8ff" />
+      <!-- Fan/Propeller Icon -->
+      <circle cx="55" cy="55" r="4" stroke="#a855f7" stroke-width="2" fill="none" />
+      <path d="M55 47c2-3 6-3 6 0s-4 3-6 0ZM55 63c-2 3-6 3-6 0s4-3 6 0ZM47 55c-3-2-3-6 0-6s3 4 0 6ZM63 55c3 2 3 6 0 6s-3-4 0-6Z" stroke="#a855f7" stroke-width="2" stroke-linejoin="round" fill="none" />
+      <text x="96" y="52" class="label-text" font-weight="700">Quạt Thông Gió (LED 3)</text>
+      <text x="96" y="74" class="label-text" fill="#a855f7" font-weight="700">🌀 ĐANG BẬT</text>
+
+      <!-- Toggle Auto/Manual -->
+      <g transform="translate(230, 35)">
+        <rect width="120" height="34" rx="17" fill="#f1f5f9" />
+        <rect x="58" y="2" width="60" height="30" rx="15" fill="#ffffff" filter="drop-shadow(0px 2px 4px rgba(0,0,0,0.06))" />
+        <text x="14" y="21" font-size="12" font-weight="600" fill="#64748b">T.Động</text>
+        <text x="70" y="21" font-size="12" font-weight="700" fill="#0f172a">Thủ công</text>
+      </g>
+
+      <!-- Buttons (Active in Manual Mode) -->
+      <g transform="translate(30, 120)">
+        <rect width="320" height="48" rx="12" fill="url(#purpleGrad)" />
+        <text x="160" y="29" class="btn-text" text-anchor="middle">Bật quạt</text>
+      </g>
+      <g transform="translate(30, 185)">
+        <rect width="320" height="48" rx="12" fill="#e2e8f0" />
+        <text x="160" y="29" class="btn-text-off" text-anchor="middle">Tắt quạt</text>
+      </g>
+      <text x="30" y="260" class="topic-text">Publish: esp32/led3 &amp; esp32/automode3</text>
+    </g>
+  </g>
+
+  <!-- 4. CHART & LOGS ROW -->
+  <g id="ChartAndLogs" transform="translate(80, 590)">
+    <!-- Chart Panel -->
+    <g id="Chart" transform="translate(0, 0)">
+      <rect width="780" height="240" class="card-bg" />
+      <text x="24" y="32" class="label-text" font-weight="700">Lịch sử đo lường (Nhiệt độ &amp; Độ ẩm)</text>
+
+      <!-- Y-Axis Labels -->
+      <text x="24" y="80" class="topic-text">35°C / 80%</text>
+      <line x1="90" y1="76" x2="740" y2="76" stroke="#f1f5f9" stroke-width="1" />
+      <text x="24" y="140" class="topic-text">30°C / 60%</text>
+      <line x1="90" y1="136" x2="740" y2="136" stroke="#f1f5f9" stroke-width="1" />
+      <text x="24" y="200" class="topic-text">25°C / 40%</text>
+      <line x1="90" y1="196" x2="740" y2="196" stroke="#f1f5f9" stroke-width="1" />
+
+      <!-- Area and Line Curves -->
+      <path d="M 90 196 Q 220 120, 350 140 T 610 80 T 740 110" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" />
+      <path d="M 90 196 Q 220 120, 350 140 T 610 80 T 740 110 L 740 196 L 90 196 Z" fill="url(#chartAreaGrad)" />
+
+      <path d="M 90 150 Q 220 170, 350 110 T 610 130 T 740 70" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="4,4" />
+
+      <!-- X-Axis Labels -->
+      <text x="90" y="224" class="topic-text">16:40</text>
+      <text x="220" y="224" class="topic-text">16:42</text>
+      <text x="350" y="224" class="topic-text">16:44</text>
+      <text x="480" y="224" class="topic-text">16:46</text>
+      <text x="610" y="224" class="topic-text">16:48</text>
+      <text x="740" y="224" class="topic-text">16:50</text>
+    </g>
+
+    <!-- Logs Panel -->
+    <g id="Logs" transform="translate(800, 0)">
+      <rect width="420" height="240" class="card-bg" />
+      <text x="24" y="32" class="label-text" font-weight="700">Nhật ký &amp; Cảnh báo hệ thống</text>
+
+      <!-- Log rows -->
+      <g transform="translate(24, 60)">
+        <rect width="372" height="34" rx="6" fill="#f8fafc" stroke="#f1f5f9" />
+        <text x="12" y="21" class="log-text"><tspan font-weight="600" fill="#64748b">[16:50:38]</tspan> 🌀 Quạt Thông Gió (LED 3) đã chuyển sang: BẬT</text>
+      </g>
+      <g transform="translate(24, 105)">
+        <rect width="372" height="34" rx="6" fill="#f8fafc" stroke="#f1f5f9" />
+        <text x="12" y="21" class="log-text"><tspan font-weight="600" fill="#64748b">[16:48:12]</tspan> 💡 Đèn Chiếu Sáng (LED 1) đã chuyển sang: TẮT</text>
+      </g>
+      <g transform="translate(24, 150)">
+        <rect width="372" height="34" rx="6" fill="#ffe4e6" stroke="#fecdd3" />
+        <text x="12" y="21" class="log-text" fill="#991b1b"><tspan font-weight="600" fill="#be123c">[16:45:00]</tspan> ⚠️ Cảnh báo: Nhiệt độ vượt ngưỡng nguy hiểm (33.5°C)</text>
+      </g>
+    </g>
+  </g>
+</svg>
